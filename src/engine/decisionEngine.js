@@ -585,6 +585,11 @@ export function generateLedgerEntry({
   else if (triggerType === 'MANUAL_OVERRIDE') triggerLabel = 'Incident Commander Override';
   else if (triggerType === 'SIMULATED_TICK') triggerLabel = 'Simulated Telemetry Tick [SYNTHETIC]';
 
+  // For periodic simulated ticks, do not spam ledger if no meaningful shifts occurred
+  if (triggerType === 'SIMULATED_TICK' && trekkerChanges.length === 0 && dispatchChanges.length === 0) {
+    return null;
+  }
+
   const triggerString = (previousEval.weatherKey === currentEval.weatherKey)
     ? `${triggerLabel} (${currentEval.weatherKey})`
     : `${triggerLabel}: ${previousEval.weatherKey} ➔ ${currentEval.weatherKey}`;
@@ -600,7 +605,7 @@ export function generateLedgerEntry({
     userNote,
     summary: trekkerChanges.length > 0 
       ? `${trekkerChanges.length} trekker priority ranks updated; ${dispatchChanges.length} sector dispatches modified.`
-      : 'Evaluation completed with stable relative rankings.'
+      : (dispatchChanges.length > 0 ? `${dispatchChanges.length} sector dispatches modified.` : 'Scenario baseline re-established.')
   };
 
   return entry;

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'signalsar-cache-v1';
+const CACHE_NAME = 'signalsar-cache-v2';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
@@ -25,45 +25,51 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
 
-  // For navigation requests (loading index.html on reload)
+  // Bypass any internal Vite development server requests, HMR, chrome extensions, etc.
+  if (
+    url.pathname.startsWith('/@') ||
+    url.pathname.includes('node_modules') ||
+    url.search.includes('t=') ||
+    url.protocol === 'chrome-extension:' ||
+    (url.hostname === 'localhost' && url.port === '3000' && !url.pathname.startsWith('/assets/'))
+  ) {
+    return;
+  }
+
+  // Handle navigation requests (index.html for SPA routes)
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          if (response.status === 200) {
+          if (response && response.status === 200) {
             const copy = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
           }
           return response;
         })
-        .catch(() => {
-          return caches.match('/index.html') || caches.match('/');
-        })
+        .catch(() => caches.match('/index.html') || caches.match('/'))
     );
     return;
   }
 
-  // Stale-While-Revalidate / Network-First with Cache fallback for all assets
+  // Network-First with Cache Fallback for all static assets
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-          }
-          return networkResponse;
-        })
-        .catch(() => cachedResponse);
-
-      return cachedResponse || fetchPromise;
-    })
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        return caches.match(event.request);
+      })
   );
 });

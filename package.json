@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node test/engine.test.js",
+    "test:audit": "node test/interactions.test.js",
     "test:server": "node test/server.test.js"
   },
   "dependencies": {

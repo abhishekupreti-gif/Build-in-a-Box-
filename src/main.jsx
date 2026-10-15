@@ -9,27 +9,28 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   </React.StrictMode>
 );
 
-// Register Service Worker for offline capability
-if ('serviceWorker' in navigator && process.env.NODE_ENV !== 'development') {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then((registration) => {
-        console.log('[SignalSAR] Service Worker registered successfully:', registration.scope);
-      })
-      .catch((error) => {
-        console.warn('[SignalSAR] Service Worker registration failed:', error);
-      });
-  });
-} else if ('serviceWorker' in navigator) {
-  // Also register in dev preview mode if supported
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then((registration) => {
-        console.log('[SignalSAR] Service Worker registered in preview/dev:', registration.scope);
-      })
-      .catch((err) => {
-        console.log('[SignalSAR] SW note:', err.message);
-      });
-  });
+// Service Worker Registration:
+// In production, register the Service Worker for offline capability.
+// In development, unregister any active workers to prevent interfering with Vite HMR/modules.
+if ('serviceWorker' in navigator) {
+  if (import.meta.env.PROD) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then((reg) => {
+          console.log('[SignalSAR] Service Worker active in production scope:', reg.scope);
+        })
+        .catch((err) => {
+          console.warn('[SignalSAR] Service Worker registration failed:', err);
+        });
+    });
+  } else {
+    // Development mode: safely unregister any lingering service workers from previous builds
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const reg of registrations) {
+        reg.unregister().then(() => {
+          console.log('[SignalSAR] Unregistered development Service Worker to allow clean Vite module serving');
+        });
+      }
+    }).catch(() => {});
+  }
 }
-
