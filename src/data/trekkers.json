@@ -1,0 +1,122 @@
+[
+  {
+    "id": "TRK-01",
+    "name": "Sarah Chen",
+    "sector": "Sector Alpha",
+    "sectorSubname": "North Ridge (2,800m)",
+    "terrainType": "Alpine Ridge / Exposed Scree",
+    "lastPingMinsAgo": 42,
+    "lastPingTimestamp": "2026-10-15T10:35:00Z",
+    "batteryPercent": 14,
+    "signalDbm": -108,
+    "equipment": [
+      "Thermal bivy",
+      "First aid kit",
+      "GPS beacon (intermittent)",
+      "Trekking poles"
+    ],
+    "situationNotes": "Reported suspected right ankle fracture at 2,800m elevation before voice link dropped. Rapidly dropping ambient temperatures.",
+    "reportedDangerScore": 80,
+    "terrainHazardBase": 75,
+    "vitalSignsStatus": "Distressed (Injured)"
+  },
+  {
+    "id": "TRK-02",
+    "name": "Marcus Vance",
+    "sector": "Sector Bravo",
+    "sectorSubname": "Box Canyon Floor",
+    "terrainType": "Deep Slot Canyon / Wash",
+    "lastPingMinsAgo": 215,
+    "lastPingTimestamp": "2026-10-15T07:42:00Z",
+    "batteryPercent": null,
+    "signalDbm": null,
+    "equipment": [
+      "Standard 45L pack",
+      "Snowshoes",
+      "Satellite pager (unresponsive)",
+      "Water filter"
+    ],
+    "situationNotes": "Last entered slot canyon wash 3.5h ago. Weather radar indicates mountain runoff heading toward sector. Telemetry packets dropped.",
+    "reportedDangerScore": 75,
+    "terrainHazardBase": 70,
+    "vitalSignsStatus": "Unknown (Signal Loss)"
+  },
+  {
+    "id": "TRK-03",
+    "name": "Elena Rostova",
+    "sector": "Sector Charlie",
+    "sectorSubname": "Windward Pass",
+    "terrainType": "Icy Saddle / Gale Corridor",
+    "lastPingMinsAgo": 18,
+    "lastPingTimestamp": "2026-10-15T10:59:00Z",
+    "batteryPercent": 78,
+    "signalDbm": -82,
+    "equipment": [
+      "High-altitude mountaineering shell",
+      "Avalanche transceiver",
+      "VHF tactical radio",
+      "Emergency bivouac"
+    ],
+    "situationNotes": "Experienced trail leader separated from party during sudden gust front. Physically intact, hunkered down behind wind deflector.",
+    "reportedDangerScore": 45,
+    "terrainHazardBase": 65,
+    "vitalSignsStatus": "Stable (Sheltered)"
+  },
+  {
+    "id": "TRK-04",
+    "name": "David Kim",
+    "sector": "Sector Delta",
+    "sectorSubname": "Glacier Crevasse Basin",
+    "terrainType": "Glacial Ice Shelf / Hidden Fissures",
+    "lastPingMinsAgo": 320,
+    "lastPingTimestamp": "2026-10-15T05:57:00Z",
+    "batteryPercent": 6,
+    "signalDbm": -116,
+    "equipment": null,
+    "situationNotes": "Solo mountaineer last confirmed crossing lower ice shelf. Automated distress beacon triggered 5h ago prior to battery collapse. Hypothermia risk critical.",
+    "reportedDangerScore": 95,
+    "terrainHazardBase": 90,
+    "vitalSignsStatus": "Critical (Hypothermia Risk)"
+  },
+  {
+    "id": "TRK-05",
+    "name": "Maya Lin & Jonah Cruz",
+    "sector": "Sector Echo",
+    "sectorSubname": "Pine River Valley",
+    "terrainType": "Dense Conifer Forest / Basin",
+    "lastPingMinsAgo": 75,
+    "lastPingTimestamp": "2026-10-15T10:02:00Z",
+    "batteryPercent": 52,
+    "signalDbm": -96,
+    "equipment": [
+      "2-person 4-season tent",
+      "Camp stove & fuel",
+      "Emergency flares (x2)",
+      "48hr survival rations"
+    ],
+    "situationNotes": "Pair deployed expedition tent in heavy timber stand. Swollen mountain creek has blocked established return trail. Safe from freeze, but stranded.",
+    "reportedDangerScore": 35,
+    "terrainHazardBase": 40,
+    "vitalSignsStatus": "Good (Camp Deployed)"
+  },
+  {
+    "id": "TRK-06",
+    "name": "Liam O'Connor",
+    "sector": "Sector Foxtrot",
+    "sectorSubname": "Upper Arctic Plateau",
+    "terrainType": "Exposed Alpine Tundra / Zero Cover",
+    "lastPingMinsAgo": 580,
+    "lastPingTimestamp": "2026-10-15T01:37:00Z",
+    "batteryPercent": null,
+    "signalDbm": null,
+    "equipment": [
+      "Ultralight running windbreaker",
+      "Hydration vest (1.5L)",
+      "Cell phone (No reception)"
+    ],
+    "situationNotes": "Trail runner equipped only for 3-hour morning run. Missing over 9.5 hours. Sub-zero temperatures and blizzard front approaching with zero thermal gear.",
+    "reportedDangerScore": 92,
+    "terrainHazardBase": 85,
+    "vitalSignsStatus": "Presumed Severe (Unsheltered)"
+  }
+]
