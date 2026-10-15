@@ -581,13 +581,18 @@ export function generateLedgerEntry({
   });
 
   let triggerLabel = 'Weather Shift';
-  if (triggerType === 'RESET') triggerLabel = 'Scenario Reset';
+  if (triggerType === 'RESET') triggerLabel = 'Scenario Baseline Reset';
   else if (triggerType === 'MANUAL_OVERRIDE') triggerLabel = 'Incident Commander Override';
+  else if (triggerType === 'SIMULATED_TICK') triggerLabel = 'Simulated Telemetry Tick [SYNTHETIC]';
+
+  const triggerString = (previousEval.weatherKey === currentEval.weatherKey)
+    ? `${triggerLabel} (${currentEval.weatherKey})`
+    : `${triggerLabel}: ${previousEval.weatherKey} ➔ ${currentEval.weatherKey}`;
 
   const entry = {
     id: `LEDGER-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     timestamp: new Date().toLocaleTimeString(),
-    trigger: `${triggerLabel}: ${previousEval.weatherKey} ➔ ${currentEval.weatherKey}`,
+    trigger: triggerString,
     weatherFrom: previousEval.weatherKey,
     weatherTo: currentEval.weatherKey,
     trekkerChanges,

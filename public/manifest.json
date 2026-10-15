@@ -1,0 +1,18 @@
+{
+  "short_name": "SignalSAR",
+  "name": "SignalSAR Advanced — Operation Lost Signal",
+  "description": "Tactical Search & Rescue Incident Command System",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#070d19",
+  "theme_color": "#070d19",
+  "display": "standalone",
+  "orientation": "any"
+}

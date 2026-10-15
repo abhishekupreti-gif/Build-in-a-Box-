@@ -253,6 +253,123 @@ body {
   background: rgba(56, 189, 248, 0.1);
 }
 
+/* Network Online / Offline Status Badge */
+.network-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.network-badge.online {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success-green);
+  border: 1px solid var(--success-green);
+}
+
+.network-badge.offline {
+  background: rgba(239, 68, 68, 0.18);
+  color: var(--danger-red);
+  border: 1px solid var(--danger-red);
+  animation: pulse-danger 1.5s infinite;
+}
+
+/* Simulation Controls */
+.sim-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 3px 6px;
+}
+
+.sim-btn {
+  background: transparent;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s;
+  color: var(--text-muted);
+}
+
+.sim-btn:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.sim-btn.start {
+  color: var(--cyan-accent);
+}
+
+.sim-btn.start:hover {
+  background: rgba(0, 245, 212, 0.15);
+  color: #ffffff;
+}
+
+.sim-btn.pause {
+  color: var(--warning-amber);
+}
+
+.sim-btn.pause:hover {
+  background: rgba(245, 158, 11, 0.15);
+  color: #ffffff;
+}
+
+.sim-btn.active-running {
+  background: rgba(0, 245, 212, 0.15);
+  color: var(--cyan-accent);
+  border: 1px solid rgba(0, 245, 212, 0.4);
+}
+
+.sim-live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  color: var(--cyan-accent);
+  font-family: var(--font-mono);
+  margin-left: 4px;
+}
+
+.sim-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cyan-accent);
+  animation: pulse-ring 1.5s infinite;
+}
+
+/* Simulated Live Stream Alert Banner */
+.sim-alert-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 16px;
+  background: rgba(0, 245, 212, 0.07);
+  border: 1px solid rgba(0, 245, 212, 0.3);
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  color: var(--cyan-accent);
+}
+
+
 /* Weather Environment Status Banner */
 .weather-status-banner {
   display: flex;

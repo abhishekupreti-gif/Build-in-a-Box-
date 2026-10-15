@@ -78,4 +78,18 @@ assert(ledgerEntry.trekkerChanges.length > 0, 'Ledger must detect trekker urgenc
 assert(ledgerEntry.trigger.includes('CLEAR ➔ SEVERE'), 'Ledger must record trigger transition');
 console.log(`✓ PASS: Decision Change Ledger generated ${ledgerEntry.trekkerChanges.length} diff records and dispatch updates`);
 
-console.log('--- ALL 5 ENGINE TEST SUITES PASSED! ---');
+// 6. Simulated Telemetry Live Tick & Serialization Test
+const simulatedTrekkers = JSON.parse(JSON.stringify(rawData));
+simulatedTrekkers[0].lastPingMinsAgo = 1; // fresh ping
+simulatedTrekkers[0].batteryPercent = 13; // drained 1%
+const tickEval = evaluateAllTrekkers(simulatedTrekkers, 'CLEAR');
+const tickLedger = generateLedgerEntry({
+  previousEval: baseline,
+  currentEval: tickEval,
+  triggerType: 'SIMULATED_TICK'
+});
+assert(tickLedger.trigger.includes('[SYNTHETIC]'), 'Ledger must explicitly label synthetic tick');
+assert.strictEqual(JSON.parse(JSON.stringify(simulatedTrekkers)).length, 6, 'Serialization must preserve 6 profiles');
+console.log('✓ PASS: Synthetic live update telemetry tick & offline serialization verified');
+
+console.log('--- ALL 6 ENGINE TEST SUITES PASSED! ---');

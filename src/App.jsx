@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   AlertTriangle,
   Shield,
@@ -22,7 +22,11 @@ import {
   Eye,
   ArrowUpRight,
   ArrowDownRight,
-  History
+  History,
+  Wifi,
+  WifiOff,
+  Play,
+  Pause
 } from 'lucide-react';
 import initialTrekkersData from './data/trekkers.json';
 import {
@@ -32,9 +36,60 @@ import {
 } from './engine/decisionEngine.js';
 
 export default function App() {
-  // Weather state
-  const [weatherCondition, setWeatherCondition] = useState('CLEAR');
-  
+  // Offline / Online network detection
+  const [isOnline, setIsOnline] = useState(() => {
+    return typeof navigator !== 'undefined' ? navigator.onLine : true;
+  });
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Trekkers state with LocalStorage caching
+  const [trekkersData, setTrekkersData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('signalsar_trekkers_v1');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length === 6) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('LocalStorage load exception:', e);
+    }
+    return initialTrekkersData;
+  });
+
+  // Weather state with LocalStorage caching
+  const [weatherCondition, setWeatherCondition] = useState(() => {
+    try {
+      const saved = localStorage.getItem('signalsar_weather_v1');
+      if (saved && (saved === 'CLEAR' || saved === 'DETERIORATING' || saved === 'SEVERE')) {
+        return saved;
+      }
+    } catch (e) {}
+    return 'CLEAR';
+  });
+
+  // Live Simulation state
+  const [isLiveUpdating, setIsLiveUpdating] = useState(false);
+  const [simulationTick, setSimulationTick] = useState(0);
+  const [lastUpdateTimestamp, setLastUpdateTimestamp] = useState(() => {
+    try {
+      return localStorage.getItem('signalsar_last_update_v1') || new Date().toLocaleTimeString();
+    } catch (e) {
+      return new Date().toLocaleTimeString();
+    }
+  });
+
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [sectorFilter, setSectorFilter] = useState('ALL');
@@ -46,8 +101,18 @@ export default function App() {
   // Active view tab: 'TACTICAL' | 'DISPATCH' | 'LEDGER'
   const [activeTab, setActiveTab] = useState('TACTICAL');
 
-  // Ledger history state
+  // Ledger history state with LocalStorage caching
   const [ledgerHistory, setLedgerHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem('signalsar_ledger_v1');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+
     const initEval = evaluateAllTrekkers(initialTrekkersData, 'CLEAR');
     const initEntry = generateLedgerEntry({
       previousEval: null,
@@ -57,17 +122,101 @@ export default function App() {
     return [initEntry];
   });
 
-  // Current evaluation based on weatherCondition
+  // Current evaluation dynamically computed from trekkersData and weatherCondition
   const currentEvaluation = useMemo(() => {
-    return evaluateAllTrekkers(initialTrekkersData, weatherCondition);
+    return evaluateAllTrekkers(trekkersData, weatherCondition);
+  }, [trekkersData, weatherCondition]);
+
+  // Persist weather to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('signalsar_weather_v1', weatherCondition);
+    } catch (e) {}
   }, [weatherCondition]);
+
+  // Persist ledger history to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('signalsar_ledger_v1', JSON.stringify(ledgerHistory.slice(0, 30)));
+    } catch (e) {}
+  }, [ledgerHistory]);
+
+  // Handle simulated live updates (Every 5 seconds)
+  useEffect(() => {
+    if (!isLiveUpdating) return;
+
+    const intervalId = setInterval(() => {
+      setTrekkersData((prevTrekkers) => {
+        // Generate bounded synthetic telemetry updates
+        const updated = prevTrekkers.map((trk) => {
+          let newPing = trk.lastPingMinsAgo !== null ? trk.lastPingMinsAgo + 1 : null;
+          let newBattery = trk.batteryPercent;
+          let newSignal = trk.signalDbm;
+
+          // 1. Intermittent packet transmit (every few ticks, one trekker's ping is renewed)
+          if (Math.random() < 0.25 && trk.lastPingMinsAgo !== null) {
+            newPing = Math.floor(Math.random() * 3) + 1; // 1 to 3 mins
+          }
+
+          // 2. Battery drain for active devices (bounded, down to 1%)
+          if (newBattery !== null && newBattery > 1) {
+            if (Math.random() < 0.35) {
+              newBattery = Math.max(1, newBattery - 1);
+            }
+          }
+
+          // 3. Signal fluctuation (bounded between -125 and -75 dBm)
+          if (newSignal !== null) {
+            const delta = (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 3) + 1);
+            newSignal = Math.max(-125, Math.min(-75, newSignal + delta));
+          }
+
+          return {
+            ...trk,
+            lastPingMinsAgo: newPing,
+            batteryPercent: newBattery,
+            signalDbm: newSignal
+          };
+        });
+
+        // Compute evaluations for ledger diff
+        const prevEval = evaluateAllTrekkers(prevTrekkers, weatherCondition);
+        const nextEval = evaluateAllTrekkers(updated, weatherCondition);
+
+        setSimulationTick((t) => {
+          const nextTick = t + 1;
+          const ledgerEntry = generateLedgerEntry({
+            previousEval: prevEval,
+            currentEval: nextEval,
+            triggerType: 'SIMULATED_TICK',
+            userNote: `[SIMULATED TELEMETRY TICK #${nextTick}] Bounded synthetic ping age & battery fluctuations recorded.`
+          });
+
+          setLedgerHistory((hist) => [ledgerEntry, ...hist.slice(0, 49)]);
+          return nextTick;
+        });
+
+        const newTime = new Date().toLocaleTimeString();
+        setLastUpdateTimestamp(newTime);
+
+        try {
+          localStorage.setItem('signalsar_trekkers_v1', JSON.stringify(updated));
+          localStorage.setItem('signalsar_last_update_v1', newTime);
+        } catch (err) {}
+
+        return updated;
+      });
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [isLiveUpdating, weatherCondition]);
 
   // Handle weather changes with automatic Decision Change Ledger recording
   const handleWeatherChange = (newWeatherKey) => {
     if (newWeatherKey === weatherCondition) return;
 
     const previousEval = currentEvaluation;
-    const nextEval = evaluateAllTrekkers(initialTrekkersData, newWeatherKey);
+    const nextEval = evaluateAllTrekkers(trekkersData, newWeatherKey);
 
     const ledgerEntry = generateLedgerEntry({
       previousEval,
@@ -79,23 +228,36 @@ export default function App() {
     setLedgerHistory(prev => [ledgerEntry, ...prev]);
   };
 
-  // Reset to baseline
+  // Reset to baseline (Full simulation reset)
   const handleResetBaseline = () => {
-    if (weatherCondition === 'CLEAR') return;
+    setIsLiveUpdating(false);
     const previousEval = currentEvaluation;
-    const nextEval = evaluateAllTrekkers(initialTrekkersData, 'CLEAR');
+    const resetTrekkers = JSON.parse(JSON.stringify(initialTrekkersData));
+    const nextEval = evaluateAllTrekkers(resetTrekkers, 'CLEAR');
 
     const ledgerEntry = generateLedgerEntry({
       previousEval,
       currentEval: nextEval,
-      triggerType: 'RESET'
+      triggerType: 'RESET',
+      userNote: 'Incident Commander reset simulation to initial mission baseline.'
     });
 
+    setTrekkersData(resetTrekkers);
     setWeatherCondition('CLEAR');
+    setSimulationTick(0);
+    const resetTime = new Date().toLocaleTimeString();
+    setLastUpdateTimestamp(resetTime);
     setLedgerHistory(prev => [ledgerEntry, ...prev]);
     setSearchQuery('');
     setSectorFilter('ALL');
     setSortBy('URGENCY_DESC');
+
+    try {
+      localStorage.removeItem('signalsar_trekkers_v1');
+      localStorage.removeItem('signalsar_weather_v1');
+      localStorage.removeItem('signalsar_ledger_v1');
+      localStorage.removeItem('signalsar_last_update_v1');
+    } catch (e) {}
   };
 
   // Filter and sort trekkers
@@ -177,8 +339,45 @@ export default function App() {
           </div>
         </div>
 
-        {/* Weather Controls & Reset */}
+        {/* Weather, Simulation Controls, Network Badge & Reset */}
         <div className="ops-controls">
+          {/* Online / Offline Status Badge */}
+          <span
+            className={`network-badge ${isOnline ? 'online' : 'offline'}`}
+            title={isOnline ? 'Online: Service Worker pre-caching and asset retention active' : 'Offline: Operating entirely on cached assets and local storage'}
+          >
+            {isOnline ? <Wifi size={13} /> : <WifiOff size={13} />}
+            {isOnline ? 'ONLINE' : 'OFFLINE'}
+          </span>
+
+          {/* Simulated Live Updates Control Pill */}
+          <div className="sim-controls-group">
+            {!isLiveUpdating ? (
+              <button
+                onClick={() => setIsLiveUpdating(true)}
+                className="sim-btn start"
+                title="Start 5-second simulated synthetic telemetry updates"
+              >
+                <Play size={13} fill="currentColor" /> START UPDATES
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsLiveUpdating(false)}
+                className="sim-btn pause active-running"
+                title="Pause synthetic telemetry updates"
+              >
+                <Pause size={13} fill="currentColor" /> PAUSE UPDATES
+              </button>
+            )}
+            {isLiveUpdating && (
+              <span className="sim-live-indicator">
+                <span className="sim-live-dot"></span>
+                TICK #{simulationTick}
+              </span>
+            )}
+          </div>
+
+          {/* Atmospheric Profile Controls */}
           <div className="weather-control-pill">
             <button
               onClick={() => handleWeatherChange('CLEAR')}
@@ -203,15 +402,32 @@ export default function App() {
             </button>
           </div>
 
+          {/* Reset Baseline Simulation */}
           <button
             onClick={handleResetBaseline}
             className="action-btn-reset"
-            title="Reset simulation to Clear baseline"
+            title="Reset simulation and telemetry back to initial baseline"
           >
             <RotateCcw size={14} /> RESET BASELINE
           </button>
         </div>
       </header>
+
+      {/* Simulated Live Telemetry Stream Indicator Banner */}
+      {isLiveUpdating && (
+        <div className="sim-alert-banner">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Activity size={15} />
+            <span><strong>SIMULATED TELEMETRY ACTIVE (TICK #{simulationTick}):</strong> Synthetic ping staleness &amp; battery fluctuations streaming every 5 seconds.</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span>Last Streamed: {lastUpdateTimestamp}</span>
+            <span style={{ background: 'rgba(0, 245, 212, 0.2)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700 }}>
+              SYNTHETIC / SIMULATED
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Live Weather Status Banner */}
       <div className={`weather-status-banner banner-${weatherCondition.toLowerCase()}`}>
